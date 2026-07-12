@@ -5,24 +5,32 @@ import datetime
 class ExpenseMethods:
     
     def __init__(self) -> None:
-        
+        """
+        Open Json as Base with Date Weekly
+        Return to [] every week
+        Creates file to save data to json
+        """
         
         try:
             with open("ExpenseBase.json") as Expensejson:
                 self.Data = json.load(Expensejson) 
 
                 currentWeek = datetime.date.today().isocalendar().week
-                if self.Data.get("Week", None) != currentWeek:
+                if self.Data.get("Week", None) != currentWeek: # if the week is not the "CurrentWeek" it will return evertthing to None except 'Budget'
                     self.Data["Transaction"] = []
                     self.Data["Week"] = currentWeek
                     with open("ExpenseBase.json", "w") as Timejson:
                         json.dump(self.Data, Timejson, indent=4)
 
-        except (FileNotFoundError,json.JSONDecodeError):
+        except (FileNotFoundError,json.JSONDecodeError): # file not found will create brand new file to save the data
             self.Data = {"Budget" : 0.0, "Transaction" : [], "Week" : datetime.date.today().isocalendar().week}
-            print("Creating A File")
+            print("Creating A File") 
 
     def setBudget(self) -> None:
+        """
+        Return to "Budget" base at self.data
+        and save to json.
+        """
         print(f"- {self.Data["Week"]} | {datetime.date.today().strftime("%A")} -")
         print("------ Set Your Budget ------")
         print("-----------------------------")
@@ -30,13 +38,17 @@ class ExpenseMethods:
         self.Data["Budget"] = float(input("Budget: "))
         if self.Data["Budget"] < 0:
             print("You cannot Put negative Numbers:")
-            self.Data["Budget"] = 0.0
+            self.Data["Budget"] = 0.00 # return the budget to 0.00
         else:
             with open("ExpenseBase.json", "w") as BudgetBase:
-                json.dump(self.Data, BudgetBase, indent=4)
+                json.dump(self.Data, BudgetBase, indent=4)# dump\save the data to json
 
     
     def TransFunc(self) -> None:
+        """
+        Save every Transaction through self.data["Transaction"]
+
+        """
         if self.Data["Budget"] == 0:
             print("No Budget!!\n Put Budget First!!")
         else:
@@ -46,12 +58,17 @@ class ExpenseMethods:
             if bill > self.Data["Budget"]:
                 print("The amount exceeds the remaining Budget!!")
             else:  
-                self.Data["Transaction"].append({"Item": item, "Bill": bill})
+                self.Data["Transaction"].append({"Item": item, "Bill": bill}) #Save
                 self.Data["Budget"] -= bill
                 with open("ExpenseBase.json", "w") as TransBase:
                     json.dump(self.Data, TransBase, indent=4)        
         
     def SeeTrans(self) -> None:
+        """
+        See all Transaction:
+        
+        """
+
         if self.Data["Transaction"] == []:
             print("No Transaction to see yet!")
         else:
@@ -60,6 +77,10 @@ class ExpenseMethods:
                 print(f"Item: {item['Item']} | Bill: ₱{item['Bill']:.2f}")
     
     def OverExpense(self) -> None:
+        """
+        See Overall Expense in this Week
+
+        """
         total = 0
         PlusTotal = 0
 
@@ -73,16 +94,9 @@ class ExpenseMethods:
         print(f"Budget left: ₱{self.Data["Budget"]:.2f}")
 
 
-
-            
-            
-            
-
 ClassCall = ExpenseMethods()
 
 while True:
-
-
 
 
     print("----------------------------------------------------")
