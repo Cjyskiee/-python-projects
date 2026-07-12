@@ -1,11 +1,20 @@
+ Python Projects
+
+A collection of Python projects built while learning programming <3
+
+ Projects
+
  Contact Book
-A command-line contact manager built in Python.
+- Add, search, delete contacts
+- Data saved to JSON file
 
-Features
-- Add, search, and delete contacts
-- Data saved to JSON file(create a json file named "contactBase.json")
-- Built with OOP and classes
+ Expense Tracker
+ Expense tracker with weekly reset.
+- Set budget, add transactions
+- Automatic weekly reset
 
-How to run
-1. Clone the repo
-2. Run `python ContactBook.py
+ Built with
+- Python 3.14
+- JSON
+- OOP / Classes
+- datetime
