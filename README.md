@@ -1,6 +1,6 @@
  Python Projects
 
-A collection of Python projects built while learning programming <3
+A collection of CL Python projects built while learning programming <3
 
  Projects
 
@@ -12,6 +12,11 @@ A collection of Python projects built while learning programming <3
  Expense tracker with weekly reset.
 - Set budget, add transactions
 - Automatic weekly reset
+
+Weather Checker
+- Fetch real-time weather data by city
+- Shows temperature, humidity, wind speed, and conditions
+- Use Real Data through OpenWeatherMap API
 
  Built with
 - Python 3.14
