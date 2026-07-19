@@ -18,6 +18,12 @@ Weather Checker
 - Shows temperature, humidity, wind speed, and conditions
 - Use Real Data through OpenWeatherMap API
 
+AI Homework Helper
+- AI tutor that explains concepts clearly
+- Gives examples instead of direct answers
+- Remembers conversation history in the same session
+- Custom system prompts to guide AI behavior
+
  Built with
 - Python 3.14
 - JSON
