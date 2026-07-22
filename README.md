@@ -27,5 +27,7 @@ AI Homework Helper
  Built with
 - Python 3.14
 - JSON
+- sqlite3
+- APIs
 - OOP / Classes
 - datetime
