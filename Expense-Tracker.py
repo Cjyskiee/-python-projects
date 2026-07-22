@@ -1,102 +1,121 @@
-import json
+
 import datetime
+import sqlite3
+
+
 
 
 class ExpenseMethods:
     
     def __init__(self) -> None:
-        """
-        Open Json as Base with Date Weekly
-        Return to [] every week
-        Creates file to save data to json
-        """
+        self.currentWeek = datetime.date.today().isocalendar().week
         
-        try:
-            with open("ExpenseBase.json") as Expensejson:
-                self.Data = json.load(Expensejson) 
 
-                currentWeek = datetime.date.today().isocalendar().week
-                if self.Data.get("Week", None) != currentWeek: # if the week is not the "CurrentWeek" it will return evertthing to None except 'Budget'
-                    self.Data["Transaction"] = []
-                    self.Data["Week"] = currentWeek
-                    with open("ExpenseBase.json", "w") as Timejson:
-                        json.dump(self.Data, Timejson, indent=4)
+        self.conn = sqlite3.connect("expense.db")
+        self.cur = self.conn.cursor()
 
-        except (FileNotFoundError,json.JSONDecodeError): # file not found will create brand new file to save the data
-            self.Data = {"Budget" : 0.0, "Transaction" : [], "Week" : datetime.date.today().isocalendar().week}
-            print("Creating A File") 
+        self.conn.execute(""" CREATE TABLE IF NOT EXISTS expenses(
+                   id INTEGER PRIMARY KEY,
+                   item TEXT,
+                   amount REAL,
+                   date TEXT
+                   )""" )
+        
+        self.conn.execute("""CREATE TABLE IF NOT EXISTS budget (
+                   id INTEGER PRIMARY KEY,
+                   amount REAL,
+                   week INTEGER
+                   ) """)
+        
+        self.cur.execute("SELECT week FROM budget WHERE week = ?", (self.currentWeek,))
+        result = self.cur.fetchone()
+
+            
+        if result is None:
+            self.cur.execute("DELETE FROM expenses")
+            self.conn.commit()
+
+        
+        self.conn.commit()
 
     def setBudget(self) -> None:
-        """
-        Return to "Budget" base at self.data
-        and save to json.
-        """
-        print(f"- {self.Data["Week"]} | {datetime.date.today().strftime("%A")} -")
+        print(f"- {self.currentWeek} | {datetime.date.today().strftime("%A")} -")
         print("------ Set Your Budget ------")
         print("-----------------------------")
-
-        self.Data["Budget"] = float(input("Budget: "))
-        if self.Data["Budget"] < 0:
+        
+        Budget = float(input("Budget: "))
+        if Budget < 0:
             print("You cannot Put negative Numbers:")
-            self.Data["Budget"] = 0.00 # return the budget to 0.00
+            Budget = 0.0
         else:
-            with open("ExpenseBase.json", "w") as BudgetBase:
-                json.dump(self.Data, BudgetBase, indent=4)# dump\save the data to json
-
+            self.conn.execute("INSERT INTO budget (amount, week) VALUES (?, ?)", (Budget, self.currentWeek))
+        
+        self.conn.commit()
     
-    def TransFunc(self) -> None:
-        """
-        Save every Transaction through self.data["Transaction"]
+    def TransFunc(self) -> None:    
 
-        """
-        if self.Data["Budget"] == 0:
+        self.cur.execute("SELECT SUM(amount) FROM budget WHERE week = ?", (self.currentWeek,))
+        originalBudget = self.cur.fetchone()
+
+        if originalBudget[0] is None:
             print("No Budget!!\n Put Budget First!!")
-        else:
-            print(f"- {self.Data["Week"]} | {datetime.date.today().strftime("%A")} -")
-            item = input("Item: ")      
-            bill = float(input("Bill: "))
-            if bill > self.Data["Budget"]:
-                print("The amount exceeds the remaining Budget!!")
-            else:  
-                self.Data["Transaction"].append({"Item": item, "Bill": bill}) #Save
-                self.Data["Budget"] -= bill
-                with open("ExpenseBase.json", "w") as TransBase:
-                    json.dump(self.Data, TransBase, indent=4)        
+            return
+        
+        self.cur.execute("SELECT SUM(amount) FROM expenses WHERE date = ?", (datetime.date.today().strftime("%c"),))
+        totalSpent = self.cur.fetchone()
+
+        remaining = originalBudget[0] - (totalSpent[0] or 0)
+        
+        print(f"- {self.currentWeek} | {datetime.date.today().strftime("%A")} -")
+        item = input("Item: ")      
+        bill = float(input("Bill: "))
+        if bill > remaining:
+            print("The amount exceeds the remaining Budget!!")
+        else:  
+            self.conn.execute("INSERT INTO expenses (item, amount, date) VALUES (?, ?, ?)", (item, bill, datetime.date.today().strftime("%c")))
+        
+        self.conn.commit()
         
     def SeeTrans(self) -> None:
-        """
-        See all Transaction:
-        
-        """
+        self.cur.execute("SELECT * FROM expenses")
+        transaction = self.cur.fetchall()
 
-        if self.Data["Transaction"] == []:
+        if len(transaction) == 0:
             print("No Transaction to see yet!")
         else:
-            print(f"- {self.Data["Week"]} | {datetime.date.today().strftime("%A")} -")
-            for item  in self.Data["Transaction"]:
-                print(f"Item: {item['Item']} | Bill: ₱{item['Bill']:.2f}")
-    
+            print(f"- {self.currentWeek} | {datetime.date.today().strftime("%A")} -")
+            for row in transaction:
+                print(f"Item: {row[1]} | Amount: ₱{row[2]:.2f} | Date: {row[3]}")
+
+        self.conn.commit()
+
     def OverExpense(self) -> None:
-        """
-        See Overall Expense in this Week
+        self.cur.execute("SELECT SUM(amount) FROM budget WHERE week = ?", (self.currentWeek,))
+        originalBudget = self.cur.fetchone()
 
-        """
-        total = 0
-        PlusTotal = 0
+        self.cur.execute("SELECT SUM(amount) FROM expenses WHERE date = ?", (datetime.date.today().strftime("%c"),))
+        totalSpent = self.cur.fetchone()
 
-        for overBills in self.Data["Transaction"]:
-            total = total + overBills["Bill"]
-        PlusTotal = total + self.Data["Budget"]
 
-        print(f"- {self.Data["Week"]} | {datetime.date.today().strftime("%A")} -")
-        print(f"Total Amount Spent: ₱{total:.2f}")
-        print(f"Total Budget: ₱{PlusTotal:.2f}")
-        print(f"Budget left: ₱{self.Data["Budget"]:.2f}")
+        remaining = originalBudget[0] - (totalSpent[0] or 0)
 
+        print(f"- {self.currentWeek} | {datetime.date.today().strftime("%A")} -")
+        print(f"Total Amount Spent: ₱{totalSpent[0] or 0:.2f}")
+        print(f"Total Budget: ₱{originalBudget[0] or 0:.2f}")
+        print(f"Budget left: ₱{remaining:.2f}")
+
+        self.conn.commit()
+
+
+            
+            
+            
 
 ClassCall = ExpenseMethods()
 
 while True:
+
+
 
 
     print("----------------------------------------------------")
@@ -120,6 +139,10 @@ while True:
         case 4:
             ClassCall.OverExpense()
         case 5:
+            ClassCall.conn.close()
             exit()
         case _:
             print("Invalid Choice!!")
+            
+            
+
